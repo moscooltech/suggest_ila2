@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero-section position-relative overflow-hidden" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 70vh; display: flex; align-items: center;">
+    <div class="hero-bg-slider position-absolute w-100 h-100">
+        <div class="hero-slide active" style="background-image: url('https://images.unsplash.com/photo-1449824913935-59a10b8d2000?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');"></div>
+        <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');"></div>
+        <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');"></div>
+    </div>
+    <div class="container position-relative z-index-1">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center text-white">
+                <h1 class="display-4 fw-bold mb-4 animate__animated animate__fadeInUp">Welcome to Ilaro Community Suggestion Box</h1>
+                <p class="lead mb-5 animate__animated animate__fadeInUp animate__delay-1s">Share your ideas to improve our community. Your voice matters!</p>
+                <a href="{{ url_for('main.submit') }}" class="btn btn-light btn-lg px-5 py-3 animate__animated animate__fadeInUp animate__delay-2s shadow-lg">
+                    <i class="fas fa-plus-circle me-2"></i>Submit Your Suggestion
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="hero-overlay position-absolute w-100 h-100" style="background: rgba(0,0,0,0.3); top: 0; left: 0;"></div>
+</div>
+
+{% if announcements %}
+<div id="announcementCarousel" class="carousel slide mt-4" data-bs-ride="carousel">
+    <div class="carousel-inner">
+        {% for ann in announcements %}
+        <div class="carousel-item {% if loop.first %}active{% endif %}">
+            {% if ann.image_url %}
+            <img src="{{ url_for('static', filename=ann.image_url) }}" class="d-block w-100" alt="{{ ann.title }}">
+            {% endif %}
+            <div class="carousel-caption d-none d-md-block">
+                <h5>{{ ann.title }}</h5>
+                <p>{{ ann.content }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#announcementCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#announcementCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon"></span>
+    </button>
+</div>
+{% endif %}
+
+<marquee class="bg-warning p-2 mt-3" behavior="scroll" direction="left">
+    {% for ann in announcements %}
+        {% if ann.expires_at and ann.expires_at > now %}
+            {{ ann.title }}: {{ ann.content }} &nbsp;&nbsp;
+        {% endif %}
+    {% endfor %}
+</marquee>
+
+{% if landmarks %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-10">
+        <div class="card shadow-lg">
+            <div class="card-header bg-primary text-white text-center">
+                <h4 class="mb-0"><i class="fas fa-images"></i> Community Landmarks</h4>
+            </div>
+            <div class="card-body p-0">
+                <div id="landmarkCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
+                    <div class="carousel-indicators">
+                        {% for lm in landmarks %}
+                        <button type="button" data-bs-target="#landmarkCarousel" data-bs-slide-to="{{ loop.index0 }}" {% if loop.first %}class="active"{% endif %} aria-label="Slide {{ loop.index }}"></button>
+                        {% endfor %}
+                    </div>
+                    <div class="carousel-inner rounded-bottom">
+                        {% for lm in landmarks %}
+                        <div class="carousel-item {% if loop.first %}active{% endif %}">
+                            <div class="position-relative">
+                                <img src="{{ url_for('static', filename=lm.image_url) }}" class="d-block w-100" alt="{{ lm.title }}" style="height: 500px; object-fit: cover; filter: brightness(0.8);">
+                                <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded p-3" style="bottom: 20px; left: 20px; right: 20px; text-align: left;">
+                                    <h3 class="text-white mb-2">{{ lm.title }}</h3>
+                                    <p class="text-light mb-0">{{ lm.caption }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#landmarkCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#landmarkCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row mt-5">
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0"><i class="fas fa-lightbulb me-2 text-warning"></i>Recent Suggestions</h2>
+            <a href="{{ url_for('main.feed') }}" class="btn btn-outline-primary">
+                <i class="fas fa-eye me-2"></i>View All Suggestions
+            </a>
+        </div>
+
+        <div class="row">
+            {% for sugg in suggestions %}
+            <div class="col-lg-6 col-xl-6 mb-4">
+                <div class="card suggestion-card h-100 shadow-sm border-0">
+                    <div class="card-header bg-white border-0 pb-0">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <span class="badge bg-primary me-2">{{ sugg.category }}</span>
+                                <span class="badge bg-{% if sugg.sentiment == 'Positive' %}success{% elif sugg.sentiment == 'Negative' %}danger{% else %}warning{% endif %}">
+                                    <i class="fas fa-{% if sugg.sentiment == 'Positive' %}smile{% elif sugg.sentiment == 'Negative' %}frown{% else %}meh{% endif %} me-1"></i>{{ sugg.sentiment }}
+                                </span>
+                            </div>
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>{{ sugg.created_at.strftime('%b %d') }}
+                            </small>
+                        </div>
+                        <h6 class="card-title text-primary mb-2">{{ sugg.summary }}</h6>
+                    </div>
+
+                    <div class="card-body pt-0">
+                        <p class="card-text text-muted small mb-3">{{ sugg.text[:120] }}{% if sugg.text|length > 120 %}...{% endif %}</p>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="vote-display">
+                                <span class="badge bg-success me-2">
+                                    <i class="fas fa-thumbs-up me-1"></i>{{ sugg.upvotes }}
+                                </span>
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-thumbs-down me-1"></i>{{ sugg.downvotes }}
+                                </span>
+                            </div>
+                            <div class="text-muted small">
+                                <i class="fas fa-comments me-1"></i>{{ sugg.comments|length }}
+                                <span class="ms-2">
+                                    <i class="fas fa-user{% if sugg.is_anonymous %}-secret{% endif %} me-1"></i>
+                                    {{ 'Anonymous' if sugg.is_anonymous else 'Member' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="{{ url_for('main.feed') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-stream me-2"></i>Explore All Community Suggestions
+            </a>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card sticky-top" style="top: 20px;">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-history me-2 text-primary"></i>Recent Activity</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_activities %}
+                <div class="activity-feed">
+                    {% for activity in recent_activities %}
+                    <div class="activity-item d-flex mb-3 pb-2 border-bottom">
+                        <div class="activity-icon me-3 mt-1">
+                            <i class="{{ activity.icon }} {{ activity.color }}" style="font-size: 1.1em;"></i>
+                        </div>
+                        <div class="activity-content flex-grow-1">
+                            <div class="activity-title small fw-medium">{{ activity.title }}</div>
+                            <div class="activity-meta text-muted smaller">
+                                <span>{{ activity.user }}</span> •
+                                <span>{{ activity.timestamp.strftime('%b %d') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                    <p class="text-muted small mb-0">No recent activity yet</p>
+                    <small class="text-muted">Activity will appear here as the community engages</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

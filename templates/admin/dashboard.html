@@ -1,0 +1,217 @@
+{% extends "admin/base.html" %}
+
+{% block admin_content %}
+<h1>Admin Dashboard</h1>
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Total Suggestions</h5>
+                <p class="card-text">{{ total }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Approved</h5>
+                <p class="card-text">{{ approved }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title">Pending</h5>
+                <p class="card-text">{{ pending }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Categories Distribution</h5>
+            </div>
+            <div class="card-body">
+                {% if category_labels %}
+                <canvas id="categoryChart" data-labels='{{ category_labels | tojson | safe }}' data-data='{{ category_data | tojson | safe }}' height="200"></canvas>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-chart-pie fa-3x mb-3"></i>
+                    <p>No suggestion data available yet</p>
+                    <small>Suggestions will appear here once submitted</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-smile me-2"></i>Sentiments Analysis</h5>
+            </div>
+            <div class="card-body">
+                {% if sentiment_labels %}
+                <canvas id="sentimentChart" data-labels='{{ sentiment_labels | tojson | safe }}' data-data='{{ sentiment_data | tojson | safe }}' height="200"></canvas>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-smile fa-3x mb-3"></i>
+                    <p>No sentiment data available yet</p>
+                    <small>Sentiment analysis will appear here once suggestions are processed</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional Analytics -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Detailed Analytics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="p-3 bg-light rounded">
+                            <h3 class="text-primary">{{ total }}</h3>
+                            <p class="mb-0 text-muted">Total Suggestions</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 bg-success rounded text-white">
+                            <h3>{{ approved }}</h3>
+                            <p class="mb-0">Approved</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 bg-warning rounded">
+                            <h3 class="text-dark">{{ pending }}</h3>
+                            <p class="mb-0 text-dark">Pending Review</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 bg-info rounded text-white">
+                            <h3>{% if total > 0 %}{{ ((approved / total) * 100)|round(1) }}{% else %}0{% endif %}</h3>
+                            <p class="mb-0">Approval Rate (%)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Category Chart
+    const categoryChartEl = document.getElementById('categoryChart');
+    if (categoryChartEl && categoryChartEl.dataset.labels) {
+        try {
+            const categoryLabels = JSON.parse(categoryChartEl.dataset.labels);
+            const categoryDataValues = JSON.parse(categoryChartEl.dataset.data);
+
+            if (categoryLabels.length > 0) {
+                const categoryData = {
+                    labels: categoryLabels,
+                    datasets: [{
+                        data: categoryDataValues,
+                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#FF6384'],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                };
+
+                new Chart(categoryChartEl, {
+                    type: 'pie',
+                    data: categoryData,
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    usePointStyle: true
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed || 0;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                        return `${label}: ${value} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error creating category chart:', error);
+        }
+    }
+
+    // Sentiment Chart
+    const sentimentChartEl = document.getElementById('sentimentChart');
+    if (sentimentChartEl && sentimentChartEl.dataset.labels) {
+        try {
+            const sentimentLabels = JSON.parse(sentimentChartEl.dataset.labels);
+            const sentimentDataValues = JSON.parse(sentimentChartEl.dataset.data);
+
+            if (sentimentLabels.length > 0) {
+                const sentimentData = {
+                    labels: sentimentLabels,
+                    datasets: [{
+                        data: sentimentDataValues,
+                        backgroundColor: ['#28a745', '#ffc107', '#dc3545'], // Green, Yellow, Red
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                };
+
+                new Chart(sentimentChartEl, {
+                    type: 'doughnut',
+                    data: sentimentData,
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    usePointStyle: true
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed || 0;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                        return `${label}: ${value} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error creating sentiment chart:', error);
+        }
+    }
+});
+</script>
+{% endblock %}

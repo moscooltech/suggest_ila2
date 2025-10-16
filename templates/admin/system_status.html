@@ -1,0 +1,165 @@
+{% extends "admin/base.html" %}
+
+{% block admin_content %}
+<h1><i class="fas fa-server me-2"></i>System Status</h1>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-brain me-2"></i>AI Services Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for service, status in ai_status.items() %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card border-{% if status.available %}success{% else %}danger{% endif %}">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">
+                                    <i class="fas fa-{% if status.available %}check-circle text-success{% else %}times-circle text-danger{% endif %} me-2"></i>
+                                    {{ service.title() }}
+                                </h5>
+                                <p class="card-text">
+                                    {% if status.available %}
+                                        <span class="badge bg-success">Available</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Unavailable</span>
+                                    {% endif %}
+                                </p>
+                                {% if status.last_error %}
+                                <small class="text-muted">
+                                    <strong>Last Error:</strong><br>
+                                    {{ status.last_error }}
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>System Information</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Flask Version:</strong> {{ flask_version or 'N/A' }}</p>
+                <p><strong>Python Version:</strong> {{ python_version or 'N/A' }}</p>
+                <p><strong>Database:</strong> SQLite</p>
+                <p><strong>Environment:</strong> Development</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>AI Processing Status</h5>
+            </div>
+            <div class="card-body">
+                {% set available_count = ai_status.values() | selectattr('available') | list | length %}
+                {% set total_count = ai_status | length %}
+
+                <div class="mb-3">
+                    <div class="progress">
+                        <div class="progress-bar bg-{% if available_count == total_count %}success{% elif available_count > 0 %}warning{% else %}danger{% endif %}"
+                             role="progressbar"
+                             style="width: {{ (available_count / total_count * 100) | round }}%"
+                             aria-valuenow="{{ available_count }}"
+                             aria-valuemin="0"
+                             aria-valuemax="{{ total_count }}">
+                            {{ available_count }}/{{ total_count }} Available
+                        </div>
+                    </div>
+                </div>
+
+                {% if available_count == total_count %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    All AI services are operational. Full functionality available.
+                </div>
+                {% elif available_count > 0 %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Some AI services are unavailable. Limited functionality with fallbacks.
+                </div>
+                {% else %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-times-circle me-2"></i>
+                    All AI services are unavailable. Basic text processing only.
+                </div>
+                {% endif %}
+
+                <div class="mt-3">
+                    <h6>Available Features:</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-{% if available_count > 0 %}check text-success{% else %}times text-danger{% endif %} me-2"></i>Smart Categorization</li>
+                        <li><i class="fas fa-{% if available_count > 0 %}check text-success{% else %}times text-danger{% endif %} me-2"></i>AI Summaries</li>
+                        <li><i class="fas fa-{% if available_count > 0 %}check text-success{% else %}times text-danger{% endif %} me-2"></i>Sentiment Analysis</li>
+                        <li><i class="fas fa-{% if available_count >= 1 %}check text-success{% else %}times text-danger{% endif %} me-2"></i>Duplicate Detection</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-tools me-2"></i>Troubleshooting</h5>
+            </div>
+            <div class="card-body">
+                <div class="accordion" id="troubleshootingAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#apiKeys">
+                                API Key Configuration
+                            </button>
+                        </h2>
+                        <div id="apiKeys" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                            <div class="accordion-body">
+                                <p>Ensure your API keys are properly configured in the <code>.env</code> file:</p>
+                                <pre><code>GEMINI_API_KEY=your-gemini-api-key
+GROQ_API_KEY=your-groq-api-key
+OPENROUTER_API_KEY=your-openrouter-api-key</code></pre>
+                                <p>Get API keys from:</p>
+                                <ul>
+                                    <li><a href="https://makersuite.google.com/app/apikey" target="_blank">Google Gemini</a></li>
+                                    <li><a href="https://console.groq.com/" target="_blank">Groq</a></li>
+                                    <li><a href="https://openrouter.ai/" target="_blank">OpenRouter</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#fallback">
+                                Fallback Behavior
+                            </button>
+                        </h2>
+                        <div id="fallback" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                            <div class="accordion-body">
+                                <p>When AI services are unavailable, the system uses these fallbacks:</p>
+                                <ul>
+                                    <li><strong>Categorization:</strong> Keyword matching (roads, power, water, etc.)</li>
+                                    <li><strong>Summarization:</strong> First 50 words of the suggestion</li>
+                                    <li><strong>Sentiment:</strong> Default to "Neutral"</li>
+                                    <li><strong>Duplicates:</strong> Text similarity comparison</li>
+                                </ul>
+                                <p class="text-muted">The application remains fully functional even without AI services.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

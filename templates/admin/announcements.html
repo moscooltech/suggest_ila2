@@ -1,0 +1,39 @@
+{% extends "admin/base.html" %}
+
+{% block admin_content %}
+<h1>Manage Announcements</h1>
+<a href="{{ url_for('admin.new_announcement') }}" class="btn btn-primary mb-3">Add New Announcement</a>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Content</th>
+            <th>Expires</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ann in announcements %}
+        <tr>
+            <td>{{ ann.title }}</td>
+            <td>{{ ann.content[:50] }}{% if ann.content|length > 50 %}...{% endif %}</td>
+            <td>{{ ann.expires_at.strftime('%Y-%m-%d') if ann.expires_at else 'No expiry' }}</td>
+            <td>
+                <div class="btn-group" role="group">
+                    <a href="{{ url_for('admin.edit_announcement', ann_id=ann.id) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <form method="POST" action="{{ url_for('admin.delete_announcement', ann_id=ann.id) }}"
+                          class="d-inline"
+                          onsubmit="return confirm('Are you sure you want to delete this announcement?')">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

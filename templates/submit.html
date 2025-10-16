@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Submit a Suggestion</h1>
+
+{% if ai_status %}
+<div class="alert alert-light border" role="alert">
+    <small class="text-muted">{{ ai_status }}</small>
+</div>
+{% endif %}
+
+<form method="POST">
+    <div class="mb-3">
+        <label for="text" class="form-label">Your Suggestion</label>
+        <textarea class="form-control" id="text" name="text" rows="5" required></textarea>
+    </div>
+    <div class="mb-3 form-check">
+        <input type="checkbox" class="form-check-input" id="anonymous" name="anonymous">
+        <label class="form-check-label" for="anonymous">Submit anonymously</label>
+    </div>
+    <div class="mb-3">
+        <label for="area" class="form-label">Community Area</label>
+        <select class="form-select" id="area" name="area" required>
+            <option value="">Select an area...</option>
+            {% for area in community_areas %}
+            <option value="{{ area.name }}">{{ area.name }}</option>
+            {% endfor %}
+        </select>
+        <div class="form-text">Choose the community area where this suggestion applies.</div>
+    </div>
+    <div class="mb-3">
+        <label for="location" class="form-label">Specific Location (optional)</label>
+        <input type="text" class="form-control" id="location" name="location" placeholder="e.g., Orita Street, Central Market, Community Health Center">
+        <div class="form-text">Provide specific details like street name, landmark, or building.</div>
+    </div>
+    {% if not current_user.is_authenticated %}
+    <div class="mb-3">
+        <label for="contact" class="form-label">Contact Information (optional)</label>
+        <input type="text" class="form-control" id="contact" name="contact">
+        <div class="form-text">We'll use this to follow up on your suggestion.</div>
+    </div>
+    {% endif %}
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends "admin/base.html" %}
+
+{% block admin_content %}
+<h1>{% if area %}Edit{% else %}Add New{% endif %} Community Area</h1>
+
+<form method="POST" class="needs-validation" novalidate>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Area Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name"
+                               value="{{ area.name if area else '' }}" required maxlength="100">
+                        <div class="form-text">Enter the name of the community area (e.g., "Central Ilaro", "Oke-Odo")</div>
+                        <div class="invalid-feedback">
+                            Area name is required and must be unique.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description"
+                                  rows="3" maxlength="500">{{ area.description if area else '' }}</textarea>
+                        <div class="form-text">Optional description of the area (max 500 characters)</div>
+                    </div>
+
+                    {% if area %}
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is_active" name="is_active"
+                               {% if area.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="is_active">
+                            Active
+                        </label>
+                        <div class="form-text">Inactive areas won't appear in the suggestion submission form</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Guidelines</h6>
+                </div>
+                <div class="card-body">
+                    <h6>Area Naming:</h6>
+                    <ul class="small mb-3">
+                        <li>Use clear, recognizable names</li>
+                        <li>Keep names concise but descriptive</li>
+                        <li>Avoid abbreviations unless commonly known</li>
+                    </ul>
+
+                    <h6>Best Practices:</h6>
+                    <ul class="small mb-0">
+                        <li>Group related neighborhoods together</li>
+                        <li>Use consistent naming conventions</li>
+                        <li>Include major landmarks in descriptions</li>
+                    </ul>
+                </div>
+            </div>
+
+            {% if area %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Area Information</h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-1"><strong>Created:</strong> {{ area.created_at.strftime('%B %d, %Y') }}</p>
+                    <p class="mb-1"><strong>Last Updated:</strong> {{ area.updated_at.strftime('%B %d, %Y') }}</p>
+                    <p class="mb-0"><strong>Status:</strong>
+                        <span class="badge {{ 'bg-success' if area.is_active else 'bg-secondary' }}">
+                            {{ 'Active' if area.is_active else 'Inactive' }}
+                        </span>
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{{ url_for('admin.manage_areas') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Areas
+        </a>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> {% if area %}Update{% else %}Create{% endif %} Area
+        </button>
+    </div>
+</form>
+
+<script>
+// Form validation
+(function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
+</script>
+{% endblock %}

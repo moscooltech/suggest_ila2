@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <!-- Suggestion Header -->
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h4 class="mb-2">
+                            <span class="badge bg-primary me-2">{{ suggestion.category }}</span>
+                            <span class="badge bg-{% if suggestion.sentiment == 'Positive' %}success{% elif suggestion.sentiment == 'Negative' %}danger{% else %}warning{% endif %}">
+                                <i class="fas fa-{% if suggestion.sentiment == 'Positive' %}smile{% elif suggestion.sentiment == 'Negative' %}frown{% else %}meh{% endif %} me-1"></i>{{ suggestion.sentiment }}
+                            </span>
+                        </h4>
+                        <h5 class="text-primary mb-3">{{ suggestion.summary }}</h5>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-{% if suggestion.status == 'approved' %}success{% elif suggestion.status == 'in_progress' %}info{% elif suggestion.status == 'completed' %}success{% elif suggestion.status == 'rejected' %}danger{% else %}secondary{% endif %} fs-6 mb-2">
+                            {{ suggestion.status.title().replace('_', ' ') }}
+                        </span>
+                        <br>
+                        <small class="text-muted">{{ suggestion.created_at.strftime('%B %d, %Y at %I:%M %p') }}</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <!-- Full Suggestion Text -->
+                <div class="mb-4">
+                    <h6 class="text-muted mb-2"><i class="fas fa-quote-left me-2"></i>Suggestion Details</h6>
+                    <p class="lead">{{ suggestion.text }}</p>
+                </div>
+
+                <!-- Location & Author Info -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        {% if suggestion.location %}
+                        <div class="mb-2">
+                            <small class="text-info">
+                                <i class="fas fa-map-marker-alt me-1"></i><strong>Location:</strong> {{ suggestion.location }}
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="mb-2">
+                            <small class="text-muted">
+                                <i class="fas fa-user{% if suggestion.is_anonymous %}-secret{% endif %} me-1"></i>
+                                {% if suggestion.author %}
+                                    <strong>By:</strong> <a href="#" class="text-decoration-none">{{ suggestion.author.username }}</a>
+                                    {% if suggestion.author.reputation_score > 0 %}
+                                    <span class="badge bg-success ms-1">{{ suggestion.author.reputation_score }}</span>
+                                    {% endif %}
+                                {% else %}
+                                    <strong>Anonymous</strong>
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Voting Section -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="vote-section">
+                        <form method="POST" action="{{ url_for('main.vote', sugg_id=suggestion.id, vote_type='up') }}" style="display:inline;">
+                            <button type="submit" class="btn btn-outline-success btn-sm me-2">
+                                <i class="fas fa-thumbs-up me-1"></i>Upvote <span class="badge bg-success">{{ suggestion.upvotes }}</span>
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('main.vote', sugg_id=suggestion.id, vote_type='down') }}" style="display:inline;">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <i class="fas fa-thumbs-down me-1"></i>Downvote <span class="badge bg-danger">{{ suggestion.downvotes }}</span>
+                            </button>
+                        </form>
+                        {% if current_user.is_authenticated %}
+                        <form method="POST" action="{{ url_for('main.bookmark', sugg_id=suggestion.id) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-outline-warning btn-sm ms-3" title="Bookmark this suggestion">
+                                <i class="fas fa-bookmark{% if suggestion in current_user.bookmarks %} text-warning{% endif %} me-1"></i>Bookmark
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    <div class="stats text-muted">
+                        <i class="fas fa-comments me-1"></i>{{ suggestion.comments|length }} comments
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Admin Responses & Status Timeline -->
+            <div class="col-lg-4 mb-4">
+                {% if suggestion.status_history %}
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-history me-2"></i>Status Updates</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            {% for status_entry in suggestion.status_history %}
+                            <div class="timeline-item mb-3 pb-3 border-bottom">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <span class="badge bg-{% if status_entry.status == 'approved' %}success{% elif status_entry.status == 'in_progress' %}info{% elif status_entry.status == 'completed' %}success{% elif status_entry.status == 'rejected' %}danger{% else %}secondary{% endif %}">
+                                        {{ status_entry.status.title().replace('_', ' ') }}
+                                    </span>
+                                    <small class="text-muted">{{ status_entry.created_at.strftime('%b %d, %H:%M') }}</small>
+                                </div>
+
+                                {% if status_entry.admin_response %}
+                                <div class="admin-response bg-light p-2 rounded mb-2">
+                                    <small><strong>Admin Response:</strong></small>
+                                    <p class="mb-0 small">{{ status_entry.admin_response }}</p>
+                                </div>
+                                {% endif %}
+
+                                {% if status_entry.notes and current_user.is_authenticated %}
+                                <div class="admin-notes bg-warning bg-opacity-10 p-2 rounded">
+                                    <small><strong>Internal Notes:</strong></small>
+                                    <p class="mb-0 small text-muted">{{ status_entry.notes }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Comments Section -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0"><i class="fas fa-comments me-2"></i>Comments ({{ suggestion.comments|length }})</h6>
+                    </div>
+                    <div class="card-body">
+                        {% if suggestion.comments %}
+                        <div class="comments-list mb-4">
+                            {% for comment in suggestion.comments %}
+                            <div class="comment-item mb-3 p-3 bg-light rounded">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <strong class="text-primary">{{ comment.user_name }}</strong>
+                                    <small class="text-muted">{{ comment.created_at.strftime('%b %d, %Y at %I:%M %p') }}</small>
+                                </div>
+                                <p class="mb-0">{{ comment.text }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-comments fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No comments yet. Be the first to share your thoughts!</p>
+                        </div>
+                        {% endif %}
+
+                        <!-- Add Comment Form -->
+                        <div class="comment-form">
+                            <h6 class="mb-3">Add a Comment</h6>
+                            <form method="POST" action="{{ url_for('main.comment', sugg_id=suggestion.id) }}">
+                                <div class="mb-3">
+                                    <textarea name="comment" class="form-control" rows="3" placeholder="Share your thoughts..." required></textarea>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <input type="text" name="name" class="form-control" placeholder="Your name (optional)">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="fas fa-paper-plane me-2"></i>Post Comment
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back to Feed -->
+        <div class="text-center mt-4">
+            <a href="{{ url_for('main.feed') }}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Suggestions
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline-item {
+    position: relative;
+    padding-left: 20px;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.timeline-item:last-child::before {
+    bottom: 50%;
+}
+</style>
+{% endblock %}

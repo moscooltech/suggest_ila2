@@ -1,0 +1,26 @@
+{% extends "admin/base.html" %}
+
+{% block admin_content %}
+<h1>Manage Landmark Images</h1>
+<a href="{{ url_for('admin.new_landmark') }}" class="btn btn-primary mb-3">Add New Landmark</a>
+<div class="row">
+    {% for lm in landmarks %}
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <img src="{{ url_for('static', filename=lm.image_url) }}" class="card-img-top" alt="{{ lm.title }}">
+            <div class="card-body">
+                <h5 class="card-title">{{ lm.title }}</h5>
+                <p class="card-text">{{ lm.caption }}</p>
+                <div class="d-flex justify-content-between">
+                    <form method="POST" action="{{ url_for('admin.delete_landmark', landmark_id=lm.id) }}" style="display:inline;">
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this landmark?')">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

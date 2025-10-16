@@ -1,0 +1,87 @@
+{% extends "admin/base.html" %}
+
+{% block admin_content %}
+<h1>Manage Suggestions</h1>
+<form method="GET" class="mb-4">
+    <select name="status" class="form-select" onchange="this.form.submit()">
+        <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+        <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+        <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+        <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>In Progress</option>
+        <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+        <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+        <option value="resolved" {% if status_filter == 'resolved' %}selected{% endif %}>Resolved</option>
+    </select>
+</form>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Text</th>
+            <th>Category</th>
+            <th>Location</th>
+            <th>Contact</th>
+            <th>Anonymous</th>
+            <th>Status</th>
+            <th>Votes</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for sugg in suggestions %}
+        <tr>
+            <td>{{ sugg.id }}</td>
+            <td>
+                <div title="{{ sugg.text }}">{{ sugg.text[:50] }}{% if sugg.text|length > 50 %}...{% endif %}</div>
+                <small class="text-muted">{{ sugg.summary[:30] }}{% if sugg.summary|length > 30 %}...{% endif %}</small>
+            </td>
+            <td>
+                <span class="badge bg-primary">{{ sugg.category }}</span>
+            </td>
+            <td>{{ sugg.location or 'N/A' }}</td>
+            <td>
+                {% if sugg.contact_info %}
+                    <span class="text-primary">{{ sugg.contact_info }}</span>
+                {% else %}
+                    <span class="text-muted">No contact</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if sugg.is_anonymous %}
+                    <span class="badge bg-warning">Yes</span>
+                {% else %}
+                    <span class="badge bg-success">No</span>
+                {% endif %}
+            </td>
+            <td>
+                <span class="badge bg-{% if sugg.status == 'approved' %}success{% elif sugg.status == 'pending' %}warning{% elif sugg.status == 'rejected' %}danger{% else %}info{% endif %}">
+                    {{ sugg.status.title() }}
+                </span>
+            </td>
+            <td>
+                <span class="text-success">↑{{ sugg.upvotes }}</span>
+                <span class="text-danger">↓{{ sugg.downvotes }}</span>
+            </td>
+            <td>
+                <div class="btn-group btn-group-sm" role="group">
+                    {% if sugg.status == 'pending' %}
+                    <a href="{{ url_for('admin.change_status', id=sugg.id, status='approved') }}" class="btn btn-success">Approve</a>
+                    <a href="{{ url_for('admin.change_status', id=sugg.id, status='in_progress') }}" class="btn btn-info">In Progress</a>
+                    <a href="{{ url_for('admin.change_status', id=sugg.id, status='rejected') }}" class="btn btn-danger">Reject</a>
+                    {% elif sugg.status == 'approved' %}
+                    <a href="{{ url_for('admin.change_status', id=sugg.id, status='in_progress') }}" class="btn btn-info">In Progress</a>
+                    <a href="{{ url_for('admin.change_status', id=sugg.id, status='completed') }}" class="btn btn-success">Complete</a>
+                    <a href="{{ url_for('admin.change_status', id=sugg.id, status='resolved') }}" class="btn btn-secondary">Resolve</a>
+                    {% elif sugg.status == 'in_progress' %}
+                    <a href="{{ url_for('admin.change_status', id=sugg.id, status='completed') }}" class="btn btn-success">Complete</a>
+                    <a href="{{ url_for('admin.change_status', id=sugg.id, status='resolved') }}" class="btn btn-secondary">Resolve</a>
+                    {% elif sugg.status == 'completed' %}
+                    <a href="{{ url_for('admin.change_status', id=sugg.id, status='resolved') }}" class="btn btn-secondary">Resolve</a>
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

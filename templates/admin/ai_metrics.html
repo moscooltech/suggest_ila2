@@ -1,0 +1,228 @@
+{% extends "admin/base.html" %}
+
+{% block admin_content %}
+<h1><i class="fas fa-chart-line me-2"></i>AI Performance Metrics</h1>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Total Operations</h5>
+                <p class="card-text h2">{{ total_operations }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Successful</h5>
+                <p class="card-text h2">{{ successful_operations }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">Success Rate</h5>
+                <p class="card-text h2">{{ "%.1f"|format(success_rate) }}%</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title">Avg Response Time</h5>
+                <p class="card-text h4">
+                    {% if operations_by_provider %}
+                        {{ "%.2f"|format(operations_by_provider[0].avg_time or 0) }}s
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>Operations by Type</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="operationsTypeChart"
+                        data-operations='{{ operations_by_type | map(attribute="operation") | list | tojson }}'
+                        data-counts='{{ operations_by_type | map(attribute="count") | list | tojson }}'
+                        data-success-counts='{{ operations_by_type | map(attribute="success_count") | list | tojson }}'></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-server me-2"></i>Operations by Provider</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="operationsProviderChart"
+                        data-providers='{{ operations_by_provider | map(attribute="provider") | list | tojson }}'
+                        data-counts='{{ operations_by_provider | map(attribute="count") | list | tojson }}'
+                        data-success-counts='{{ operations_by_provider | map(attribute="success_count") | list | tojson }}'></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-calendar-week me-2"></i>Performance Over Last 7 Days</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="performanceChart"
+                        data-dates='{{ daily_stats | map(attribute="date") | list | tojson }}'
+                        data-totals='{{ daily_stats | map(attribute="total") | list | tojson }}'
+                        data-successful='{{ daily_stats | map(attribute="successful") | list | tojson }}'></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Recent Errors</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_errors %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Operation</th>
+                                <th>Provider</th>
+                                <th>Error Message</th>
+                                <th>Response Time</th>
+                                <th>Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for error in recent_errors %}
+                            <tr>
+                                <td><span class="badge bg-secondary">{{ error.operation }}</span></td>
+                                <td><span class="badge bg-primary">{{ error.provider }}</span></td>
+                                <td class="text-truncate" style="max-width: 300px;" title="{{ error.error_message }}">{{ error.error_message }}</td>
+                                <td>{{ "%.2f"|format(error.response_time) }}s</td>
+                                <td>{{ error.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No recent errors found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+const operationsTypeEl = document.getElementById('operationsTypeChart');
+const operationsProviderEl = document.getElementById('operationsProviderChart');
+const performanceEl = document.getElementById('performanceChart');
+
+if (operationsTypeEl) {
+    const operationsTypeData = {
+        labels: JSON.parse(operationsTypeEl.dataset.operations),
+        datasets: [{
+            label: 'Total Operations',
+            data: JSON.parse(operationsTypeEl.dataset.counts),
+            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF']
+        }, {
+            label: 'Successful Operations',
+            data: JSON.parse(operationsTypeEl.dataset.successCounts),
+            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF']
+        }]
+    };
+
+    new Chart(operationsTypeEl, {
+        type: 'bar',
+        data: operationsTypeData,
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+if (operationsProviderEl) {
+    const operationsProviderData = {
+        labels: JSON.parse(operationsProviderEl.dataset.providers),
+        datasets: [{
+            label: 'Total Operations',
+            data: JSON.parse(operationsProviderEl.dataset.counts),
+            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56']
+        }, {
+            label: 'Successful Operations',
+            data: JSON.parse(operationsProviderEl.dataset.successCounts),
+            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56']
+        }]
+    };
+
+    new Chart(operationsProviderEl, {
+        type: 'bar',
+        data: operationsProviderData,
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+if (performanceEl) {
+    const performanceData = {
+        labels: JSON.parse(performanceEl.dataset.dates),
+        datasets: [{
+            label: 'Total Operations',
+            data: JSON.parse(performanceEl.dataset.totals),
+            borderColor: '#36A2EB',
+            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+            tension: 0.1
+        }, {
+            label: 'Successful Operations',
+            data: JSON.parse(performanceEl.dataset.successful),
+            borderColor: '#4BC0C0',
+            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+            tension: 0.1
+        }]
+    };
+
+    new Chart(performanceEl, {
+        type: 'line',
+        data: performanceData,
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

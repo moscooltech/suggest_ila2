@@ -1,0 +1,24 @@
+{% extends "admin/base.html" %}
+
+{% block admin_content %}
+<h1>{% if announcement %}Edit{% else %}Add New{% endif %} Announcement</h1>
+<form method="POST" enctype="multipart/form-data">
+    <div class="mb-3">
+        <label for="title" class="form-label">Title</label>
+        <input type="text" class="form-control" id="title" name="title" value="{{ announcement.title if announcement else '' }}" required>
+    </div>
+    <div class="mb-3">
+        <label for="content" class="form-label">Content</label>
+        <textarea class="form-control" id="content" name="content" rows="5" required>{{ announcement.content if announcement else '' }}</textarea>
+    </div>
+    <div class="mb-3">
+        <label for="image_url" class="form-label">Image URL (optional)</label>
+        <input type="url" class="form-control" id="image_url" name="image_url" value="{{ announcement.image_url if announcement else '' }}">
+    </div>
+    <div class="mb-3">
+        <label for="expires_at" class="form-label">Expires At (optional)</label>
+        <input type="datetime-local" class="form-control" id="expires_at" name="expires_at" value="{{ announcement.expires_at.strftime('%Y-%m-%dT%H:%M') if announcement and announcement.expires_at else '' }}">
+    </div>
+    <button type="submit" class="btn btn-primary">{{ 'Update' if announcement else 'Create' }} Announcement</button>
+</form>
+{% endblock %}

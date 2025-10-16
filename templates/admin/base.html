@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        <div class="list-group">
+            <a href="{{ url_for('admin.dashboard') }}" class="list-group-item list-group-item-action">Dashboard</a>
+            <a href="{{ url_for('admin.analytics') }}" class="list-group-item list-group-item-action">
+                <i class="fas fa-chart-line me-2"></i>Analytics
+            </a>
+            <a href="{{ url_for('admin.manage_suggestions') }}" class="list-group-item list-group-item-action">Manage Suggestions</a>
+            <a href="{{ url_for('admin.manage_announcements') }}" class="list-group-item list-group-item-action">Announcements</a>
+            <a href="{{ url_for('admin.manage_landmarks') }}" class="list-group-item list-group-item-action">Landmark Images</a>
+            <a href="{{ url_for('admin.manage_areas') }}" class="list-group-item list-group-item-action">Community Areas</a>
+            <a href="{{ url_for('admin.ai_metrics') }}" class="list-group-item list-group-item-action">AI Metrics</a>
+            <a href="{{ url_for('admin.export_data', format='csv') }}" class="list-group-item list-group-item-action">Export CSV</a>
+            <a href="{{ url_for('admin.export_data', format='excel') }}" class="list-group-item list-group-item-action">Export Excel</a>
+            <a href="{{ url_for('admin.system_status') }}" class="list-group-item list-group-item-action">System Status</a>
+        </div>
+    </div>
+    <div class="col-md-9">
+        {% block admin_content %}{% endblock %}
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}

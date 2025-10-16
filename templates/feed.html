@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="mb-0"><i class="fas fa-stream me-2"></i>Suggestion Feed</h1>
+            <a href="{{ url_for('main.submit') }}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-2"></i>Submit Suggestion
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" class="d-flex gap-3">
+                    <div class="flex-grow-1">
+                        <label class="form-label fw-bold"><i class="fas fa-search me-2"></i>Search Suggestions</label>
+                        <input type="text" name="search" class="form-control" placeholder="Search by text, category, or location..." value="{{ search_query }}">
+                    </div>
+                    <div style="min-width: 180px;">
+                        <label class="form-label fw-bold"><i class="fas fa-filter me-2"></i>Category</label>
+                        <select name="category" class="form-select">
+                            <option value="all">All Categories</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div style="min-width: 180px;">
+                        <label class="form-label fw-bold"><i class="fas fa-map-marker-alt me-2"></i>Area</label>
+                        <select name="area" class="form-select">
+                            <option value="all">All Areas</option>
+                            {% for area in community_areas %}
+                            <option value="{{ area.name }}" {% if area_filter == area.name %}selected{% endif %}>{{ area.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div style="min-width: 150px;">
+                        <label class="form-label fw-bold"><i class="fas fa-sort me-2"></i>Sort By</label>
+                        <select name="sort" class="form-select">
+                            <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+                            <option value="upvoted" {% if sort_by == 'upvoted' %}selected{% endif %}>Most Upvoted</option>
+                            <option value="category" {% if sort_by == 'category' %}selected{% endif %}>By Category</option>
+                        </select>
+                    </div>
+                    <div class="d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                        {% if search_query or category_filter != 'all' or area_filter != 'all' %}
+                        <a href="{{ url_for('main.feed') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> Clear
+                        </a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h5 class="card-title"><i class="fas fa-chart-bar me-2"></i>Feed Stats</h5>
+                <p class="mb-1">Total Suggestions: <strong>{{ pagination.total }}</strong></p>
+                <p class="mb-0">Showing page {{ pagination.page }} of {{ pagination.pages }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    {% for sugg in suggestions %}
+    <div class="col-lg-6 col-xl-4 mb-4">
+        <a href="{{ url_for('main.suggestion_detail', sugg_id=sugg.id) }}" class="text-decoration-none">
+            <div class="card suggestion-card h-100 shadow-sm border-0">
+                <div class="card-header bg-white border-0 pb-0">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <span class="badge bg-primary me-2 fs-6">{{ sugg.category }}</span>
+                            <span class="badge bg-{% if sugg.sentiment == 'Positive' %}success{% elif sugg.sentiment == 'Negative' %}danger{% else %}warning{% endif %} fs-6">
+                                <i class="fas fa-{% if sugg.sentiment == 'Positive' %}smile{% elif sugg.sentiment == 'Negative' %}frown{% else %}meh{% endif %} me-1"></i>{{ sugg.sentiment }}
+                            </span>
+                        </div>
+                        <small class="text-muted">
+                            <i class="fas fa-clock me-1"></i>{{ sugg.created_at.strftime('%b %d') }}
+                        </small>
+                    </div>
+                    <h6 class="card-title text-primary mb-2">{{ sugg.summary }}</h6>
+                </div>
+
+            <div class="card-body pt-0">
+                <p class="card-text text-muted small mb-3">{{ sugg.text[:150] }}{% if sugg.text|length > 150 %}...{% endif %}</p>
+
+                {% if sugg.location %}
+                <div class="mb-2">
+                    <small class="text-info">
+                        <i class="fas fa-map-marker-alt me-1"></i><strong>Location:</strong> {{ sugg.location }}
+                    </small>
+                </div>
+                {% endif %}
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="vote-section">
+                        <form method="POST" action="{{ url_for('main.vote', sugg_id=sugg.id, vote_type='up') }}" style="display:inline;">
+                            <button type="submit" class="btn btn-outline-success btn-sm me-1">
+                                <i class="fas fa-thumbs-up"></i> <span class="vote-count">{{ sugg.upvotes }}</span>
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('main.vote', sugg_id=sugg.id, vote_type='down') }}" style="display:inline;">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <i class="fas fa-thumbs-down"></i> <span class="vote-count">{{ sugg.downvotes }}</span>
+                            </button>
+                        </form>
+                        {% if current_user.is_authenticated %}
+                        <form method="POST" action="{{ url_for('main.bookmark', sugg_id=sugg.id) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-outline-warning btn-sm ms-2" title="Bookmark this suggestion">
+                                <i class="fas fa-bookmark{% if sugg in current_user.bookmarks %} text-warning{% endif %}"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    <div class="stats text-muted small">
+                        <i class="fas fa-comments me-1"></i>{{ sugg.comments|length }}
+                        <span class="ms-2">
+                            <i class="fas fa-user{% if sugg.is_anonymous %}-secret{% endif %} me-1"></i>
+                            {% if sugg.author %}
+                                <a href="{{ url_for('main.profile') }}" class="text-decoration-none">{{ sugg.author.username }}</a>
+                            {% else %}
+                                {{ 'Anonymous' if sugg.is_anonymous else 'Member' }}
+                            {% endif %}
+                        </span>
+                        {% if sugg.author and sugg.author.reputation_score > 0 %}
+                        <span class="badge bg-success ms-1">{{ sugg.author.reputation_score }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if sugg.comments %}
+                <div class="comments-preview mb-3">
+                    <div class="border-start border-primary border-3 ps-2">
+                        {% for comment in sugg.comments[:2] %}
+                        <div class="comment-item small mb-2">
+                            <strong class="text-primary">{{ comment.user_name }}:</strong>
+                            <span class="text-muted">{{ comment.text[:80] }}{% if comment.text|length > 80 %}...{% endif %}</span>
+                        </div>
+                        {% endfor %}
+                        {% if sugg.comments|length > 2 %}
+                        <small class="text-muted">+{{ sugg.comments|length - 2 }} more comments</small>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="comment-form">
+                    <form method="POST" action="{{ url_for('main.comment', sugg_id=sugg.id) }}">
+                        <div class="input-group input-group-sm">
+                            <input type="text" name="comment" class="form-control" placeholder="Add comment..." required>
+                            <input type="text" name="name" class="form-control" placeholder="Name (optional)" style="max-width: 120px;">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if pagination.pages > 1 %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="Suggestion pagination">
+            <ul class="pagination justify-content-center">
+                {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.feed', page=pagination.prev_num, sort=sort_by, category=category_filter, area=area_filter, search=search_query) }}">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-chevron-left"></i> Previous</span>
+                </li>
+                {% endif %}
+
+                {% for page_num in pagination.iter_pages() %}
+                {% if page_num %}
+                {% if page_num == pagination.page %}
+                <li class="page-item active">
+                    <span class="page-link">{{ page_num }}</span>
+                </li>
+                {% else %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.feed', page=page_num, sort=sort_by, category=category_filter, area=area_filter, search=search_query) }}">{{ page_num }}</a>
+                </li>
+                {% endif %}
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+                {% endif %}
+                {% endfor %}
+
+                {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.feed', page=pagination.next_num, sort=sort_by, category=category_filter, area=area_filter, search=search_query) }}">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Next <i class="fas fa-chevron-right"></i></span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function updateFilters() {
+    const sort = document.querySelector('select[name="sort"]').value;
+    const category = document.querySelector('select[name="category"]').value;
+    const area = document.querySelector('select[name="area"]').value;
+    const url = new URL(window.location);
+    url.searchParams.set('sort', sort);
+    url.searchParams.set('category', category);
+    url.searchParams.set('area', area);
+    url.searchParams.set('page', '1'); // Reset to first page when filtering
+    window.location.href = url.toString();
+}
+</script>
+{% endblock %}
