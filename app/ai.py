@@ -45,6 +45,15 @@ if GROQ_API_KEY:
 
 def check_ai_service_status():
     """Check the availability of AI services and update status."""
+    # Use cached status if checked recently (within 30 minutes)
+    import time
+    current_time = time.time()
+
+    if hasattr(check_ai_service_status, '_last_check') and (current_time - check_ai_service_status._last_check) < 1800:
+        return ai_service_status
+
+    check_ai_service_status._last_check = current_time
+
     # Check Gemini
     if GEMINI_API_KEY:
         try:

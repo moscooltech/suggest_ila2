@@ -7,9 +7,22 @@ def migrate_database():
     with app.app_context():
         try:
             # Add is_admin column to user table if it doesn't exist
-            db.session.execute(text("ALTER TABLE user ADD COLUMN is_admin BOOLEAN DEFAULT 0"))
-            db.session.commit()
-            print("✅ Added is_admin column to user table")
+            try:
+                db.session.execute(text("ALTER TABLE user ADD COLUMN is_admin BOOLEAN DEFAULT 0"))
+                db.session.commit()
+                print("✅ Added is_admin column to user table")
+            except Exception as e:
+                print(f"⚠️ is_admin column might already exist: {e}")
+                db.session.rollback()
+
+            # Add image_filename column to suggestion table if it doesn't exist
+            try:
+                db.session.execute(text("ALTER TABLE suggestion ADD COLUMN image_filename VARCHAR(255)"))
+                db.session.commit()
+                print("✅ Added image_filename column to suggestion table")
+            except Exception as e:
+                print(f"⚠️ image_filename column might already exist: {e}")
+                db.session.rollback()
 
             # Set admin user as admin
             result = db.session.execute(text("UPDATE user SET is_admin = 1 WHERE username = 'admin'"))

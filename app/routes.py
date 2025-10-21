@@ -1,17 +1,35 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from flask_login import current_user, login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from . import db
 from .models import Suggestion, Vote, Announcement, LandmarkImage, Comment, User, Bookmark, SuggestionStatus
 from .ai import categorize, summarize, analyze_sentiment, check_duplicate, get_embedding, get_ai_status_message
 from sqlalchemy import func
 import json
+import os
 from datetime import datetime
 
 # Import CommunityArea model for dynamic areas
 from .models import CommunityArea
 
 bp = Blueprint('main', __name__)
+
+# Configuration for file uploads
+UPLOAD_FOLDER = 'static/uploads'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def secure_filename_custom(filename):
+    """Custom secure filename that preserves extension"""
+    if not filename:
+        return None
+    name, ext = os.path.splitext(filename)
+    secure_name = secure_filename(name)
+    return secure_name + ext.lower()
 
 @bp.route('/')
 def index():
@@ -99,6 +117,37 @@ def submit():
         else:
             location = area
 
+        # Handle image upload
+        image_filename = None
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename != '' and allowed_file(file.filename):
+                # Validate file size
+                file.seek(0, os.SEEK_END)
+                file_size = file.tell()
+                file.seek(0)
+
+                if file_size > MAX_FILE_SIZE:
+                    flash('File size exceeds 5MB limit.', 'error')
+                    return redirect(request.url)
+
+                # Generate secure filename with timestamp to avoid conflicts
+                timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+                secure_name = secure_filename_custom(file.filename)
+                if secure_name:
+                    name, ext = os.path.splitext(secure_name)
+                    image_filename = f"{timestamp}_{name}{ext}"
+
+                    # Ensure upload directory exists
+                    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+                    # Save the file
+                    file_path = os.path.join(UPLOAD_FOLDER, image_filename)
+                    file.save(file_path)
+            elif file and file.filename != '':
+                flash('Invalid file type. Only PNG, JPG, JPEG, and GIF are allowed.', 'error')
+                return redirect(request.url)
+
         # Get all approved suggestions for duplicate check
         existing = Suggestion.query.filter_by(status='approved').all()
         duplicate = check_duplicate(text, existing)
@@ -139,6 +188,7 @@ def submit():
             contact_info=contact_info,
             location=location,
             embedding_vector=embedding_str,
+            image_filename=image_filename,
             status=default_status,
             author_id=current_user.id if current_user.is_authenticated else None
         )
@@ -151,9 +201,8 @@ def submit():
         flash('Suggestion submitted successfully!', 'success')
         return redirect(url_for('main.feed'))
 
-    ai_status = get_ai_status_message()
     community_areas = CommunityArea.query.filter_by(is_active=True).order_by(CommunityArea.name).all()
-    return render_template('submit.html', ai_status=ai_status, community_areas=community_areas)
+    return render_template('submit.html', community_areas=community_areas)
 
 @bp.route('/feed')
 def feed():

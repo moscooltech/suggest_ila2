@@ -41,6 +41,7 @@ class Suggestion(db.Model):
     upvotes = db.Column(db.Integer, default=0)
     downvotes = db.Column(db.Integer, default=0)
     embedding_vector = db.Column(db.Text)  # JSON string of list
+    image_filename = db.Column(db.String(255))  # Filename of uploaded image
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     can_edit = db.Column(db.Boolean, default=True)  # Allow editing before approval
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

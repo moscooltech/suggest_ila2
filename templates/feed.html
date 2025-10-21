@@ -93,6 +93,15 @@
                 </div>
 
             <div class="card-body pt-0">
+                {% if sugg.image_filename %}
+                <div class="mb-3 text-center">
+                    <img src="{{ url_for('static', filename='uploads/' + sugg.image_filename) }}"
+                         class="img-fluid rounded"
+                         alt="Suggestion image"
+                         style="max-height: 150px; width: 100%; object-fit: cover;">
+                </div>
+                {% endif %}
+
                 <p class="card-text text-muted small mb-3">{{ sugg.text[:150] }}{% if sugg.text|length > 150 %}...{% endif %}</p>
 
                 {% if sugg.location %}

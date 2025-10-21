@@ -3,16 +3,15 @@
 {% block content %}
 <h1>Submit a Suggestion</h1>
 
-{% if ai_status %}
-<div class="alert alert-light border" role="alert">
-    <small class="text-muted">{{ ai_status }}</small>
-</div>
-{% endif %}
-
-<form method="POST">
+<form method="POST" enctype="multipart/form-data">
     <div class="mb-3">
         <label for="text" class="form-label">Your Suggestion</label>
         <textarea class="form-control" id="text" name="text" rows="5" required></textarea>
+    </div>
+    <div class="mb-3">
+        <label for="image" class="form-label">Upload Image (optional)</label>
+        <input type="file" class="form-control" id="image" name="image" accept="image/*">
+        <div class="form-text">Supported formats: JPG, PNG, GIF. Max size: 5MB.</div>
     </div>
     <div class="mb-3 form-check">
         <input type="checkbox" class="form-check-input" id="anonymous" name="anonymous">
