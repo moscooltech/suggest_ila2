@@ -96,8 +96,8 @@ def analytics():
     area_stats_query = text("""
         SELECT
             CASE
-                WHEN instr(s.location, ' - ') > 0
-                THEN substr(s.location, 1, instr(s.location, ' - ') - 1)
+                WHEN LOCATE(' - ', s.location) > 0
+                THEN SUBSTRING(s.location, 1, LOCATE(' - ', s.location) - 1)
                 ELSE s.location
             END as area_name,
             COUNT(s.id) as count

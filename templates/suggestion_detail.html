@@ -28,9 +28,9 @@
 
             <div class="card-body">
                 <!-- Image Display -->
-                {% if suggestion.image_filename %}
+                {% if suggestion.image_data or suggestion.image_filename %}
                 <div class="mb-4 text-center">
-                    <img src="{{ url_for('static', filename='uploads/' + suggestion.image_filename) }}"
+                    <img src="{{ url_for('main.get_image', suggestion_id=suggestion.id) }}"
                          class="img-fluid rounded shadow-sm"
                          alt="Suggestion image"
                          style="max-height: 400px; object-fit: cover;">

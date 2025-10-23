@@ -2,6 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 import os
+from config import get_config
 
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -12,12 +13,12 @@ def load_user(user_id):
     from .models import User
     return User.query.get(int(user_id))
 
-def create_app():
+def create_app(config_name=None):
     app = Flask(__name__, template_folder='../templates', static_folder='../static')
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///suggestions.db'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['UPLOAD_FOLDER'] = 'static/uploads'
+
+    # Load configuration
+    config_class = get_config(config_name)
+    app.config.from_object(config_class)
 
     db.init_app(app)
     login_manager.init_app(app)

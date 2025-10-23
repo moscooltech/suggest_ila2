@@ -8,7 +8,7 @@ def migrate_database():
         try:
             # Add is_admin column to user table if it doesn't exist
             try:
-                db.session.execute(text("ALTER TABLE user ADD COLUMN is_admin BOOLEAN DEFAULT 0"))
+                db.session.execute(text("ALTER TABLE user ADD COLUMN is_admin TINYINT(1) DEFAULT 0"))
                 db.session.commit()
                 print("✅ Added is_admin column to user table")
             except Exception as e:

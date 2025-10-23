@@ -93,9 +93,9 @@
                 </div>
 
             <div class="card-body pt-0">
-                {% if sugg.image_filename %}
+                {% if sugg.image_data or sugg.image_filename %}
                 <div class="mb-3 text-center">
-                    <img src="{{ url_for('static', filename='uploads/' + sugg.image_filename) }}"
+                    <img src="{{ url_for('main.get_image', suggestion_id=sugg.id) }}"
                          class="img-fluid rounded"
                          alt="Suggestion image"
                          style="max-height: 150px; width: 100%; object-fit: cover;">
