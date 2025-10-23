@@ -40,6 +40,10 @@ class ProductionConfig(Config):
     SQLALCHEMY_MAX_OVERFLOW = 20
     SQLALCHEMY_POOL_TIMEOUT = 30
     SQLALCHEMY_POOL_RECYCLE = 3600
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+    }
 
 # Configuration mapping
 config = {
