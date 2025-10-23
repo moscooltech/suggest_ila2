@@ -18,6 +18,7 @@ class DevelopmentConfig(Config):
 class ProductionConfig(Config):
     """Production configuration"""
     DEBUG = False
+    TESTING = False
 
     # Production uses PostgreSQL (or any database specified in DATABASE_URL)
     database_url = os.environ.get('DATABASE_URL')
@@ -27,10 +28,18 @@ class ProductionConfig(Config):
         # Fallback to SQLite for development/production flexibility
         SQLALCHEMY_DATABASE_URI = 'sqlite:///suggestions.db'
 
-    # Additional production settings
+    # Production security settings
+    SECRET_KEY = os.environ.get('SECRET_KEY', os.urandom(32).hex())
     SESSION_COOKIE_SECURE = True
     REMEMBER_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+
+    # Production performance settings
+    SQLALCHEMY_POOL_SIZE = 10
+    SQLALCHEMY_MAX_OVERFLOW = 20
+    SQLALCHEMY_POOL_TIMEOUT = 30
+    SQLALCHEMY_POOL_RECYCLE = 3600
 
 # Configuration mapping
 config = {
