@@ -31,8 +31,11 @@ def login():
         password = request.form['password']
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password, password):
-            login_user(user)
-            return redirect(url_for('admin.dashboard'))
+            if user.is_admin:
+                login_user(user)
+                return redirect(url_for('admin.dashboard'))
+            else:
+                flash('Access denied. Admin privileges required.', 'error')
         flash('Invalid credentials', 'error')
     return render_template('admin/login.html')
 

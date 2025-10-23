@@ -1,16 +1,37 @@
+import os
+from dotenv import load_dotenv
+from werkzeug.security import generate_password_hash
 from app import create_app, db
 from app.models import User
-from werkzeug.security import generate_password_hash
 
-app = create_app()
+# Load environment variables
+load_dotenv()
 
-with app.app_context():
-    db.create_all()
-    # Create default admin user
-    if not User.query.filter_by(username='admin').first():
-        admin = User(username='admin', email='admin@ilaro.com', password=generate_password_hash('admin123'), is_admin=True)
-        db.session.add(admin)
+def add_admin_user(username, password, email=None):
+    """Adds a new admin user to the database."""
+    app = create_app()
+    with app.app_context():
+        if User.query.filter_by(username=username).first():
+            print(f"User '{username}' already exists.")
+            return
+
+        if email and User.query.filter_by(email=email).first():
+            print(f"Email '{email}' is already registered.")
+            return
+
+        new_admin = User(
+            username=username,
+            password=generate_password_hash(password),
+            email=email if email else f"{username}@example.com",
+            is_admin=True,
+            email_verified=True  # Automatically verify admin email
+        )
+        db.session.add(new_admin)
         db.session.commit()
-        print("Admin user created: username=admin, password=admin123")
-    else:
-        print("Admin user already exists")
+        print(f"Admin user '{username}' created successfully!")
+
+if __name__ == "__main__":
+    admin_username = "ilaro-admin"
+    admin_password = "ilaro-yewa"
+    
+    add_admin_user(admin_username, admin_password)
