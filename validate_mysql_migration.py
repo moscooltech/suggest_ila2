@@ -22,10 +22,10 @@ def validate_mysql_setup():
         print("❌ DATABASE_URL environment variable not set")
         return False
 
-    if not database_url.startswith('mysql+pymysql://'):
-        print("❌ DATABASE_URL does not use MySQL format")
+    if not (database_url.startswith('mysql+pymysql://') or database_url.startswith('postgresql://')):
+        print("❌ DATABASE_URL does not use supported database format")
         print(f"Current: {database_url}")
-        print("Expected: mysql+pymysql://username:password@host:port/database")
+        print("Expected: mysql+pymysql://username:password@host:port/database or postgresql://username:password@host:port/database")
         return False
 
     print("✅ DATABASE_URL is properly configured")

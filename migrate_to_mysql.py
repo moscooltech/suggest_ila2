@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Migration script to transfer data from SQLite to MySQL.
-This script reads data from the existing SQLite database and inserts it into MySQL.
+Migration script to transfer data from SQLite to PostgreSQL/MySQL.
+This script reads data from the existing SQLite database and inserts it into the target database.
 """
 
 import os
@@ -11,14 +11,14 @@ from sqlalchemy.orm import sessionmaker
 from app import create_app
 from app.models import User, Suggestion, Announcement, LandmarkImage, Vote, Comment, Bookmark, SuggestionStatus, AIMetrics, CommunityArea
 
-def create_mysql_app():
-    """Create Flask app with MySQL configuration"""
-    # Temporarily override DATABASE_URL for MySQL
-    mysql_url = os.environ.get('MYSQL_DATABASE_URL') or os.environ.get('DATABASE_URL')
-    if not mysql_url:
-        print("❌ MYSQL_DATABASE_URL or DATABASE_URL environment variable not set")
-        print("Please set MYSQL_DATABASE_URL to your MySQL database URL, e.g.:")
-        print("mysql+pymysql://username:password@localhost/dbname")
+def create_database_app():
+    """Create Flask app with database configuration"""
+    # Get database URL from environment
+    database_url = os.environ.get('DATABASE_URL')
+    if not database_url:
+        print("❌ DATABASE_URL environment variable not set")
+        print("Please set DATABASE_URL to your database URL, e.g.:")
+        print("postgresql://username:password@host:port/database")
         sys.exit(1)
 
     # Create app with MySQL URL
@@ -34,16 +34,16 @@ def migrate_data():
     sqlite_engine = create_engine(sqlite_url, echo=False)
     SQLiteSession = sessionmaker(bind=sqlite_engine)
 
-    # Create MySQL app and engine (target)
-    mysql_app = create_mysql_app()
-    with mysql_app.app_context():
-        mysql_engine = mysql_app.extensions['sqlalchemy'].engine
-        MySQLSession = sessionmaker(bind=mysql_engine)
+    # Create database app and engine (target)
+    database_app = create_database_app()
+    with database_app.app_context():
+        database_engine = database_app.extensions['sqlalchemy'].engine
+        DatabaseSession = sessionmaker(bind=database_engine)
 
-    print("🚀 Starting data migration from SQLite to MySQL...")
+    print("🚀 Starting data migration from SQLite to database...")
 
     try:
-        with SQLiteSession() as sqlite_session, MySQLSession() as mysql_session:
+        with SQLiteSession() as sqlite_session, DatabaseSession() as database_session:
             # Migrate Users
             print("📦 Migrating users...")
             users = sqlite_session.query(User).all()
@@ -82,8 +82,8 @@ def migrate_data():
                         except Exception as e:
                             print(f"  ⚠️ Failed to migrate image for suggestion {suggestion.id}: {e}")
 
-                mysql_session.merge(suggestion)
-            mysql_session.commit()
+                database_session.merge(suggestion)
+            database_session.commit()
             print(f"✅ Migrated {len(suggestions)} suggestions")
 
             # Migrate Votes
@@ -150,7 +150,7 @@ def migrate_data():
 
     except Exception as e:
         print(f"❌ Migration failed: {e}")
-        mysql_session.rollback()
+        database_session.rollback()
         sys.exit(1)
 
 if __name__ == '__main__':

@@ -42,7 +42,7 @@ class Suggestion(db.Model):
     downvotes = db.Column(db.Integer, default=0)
     embedding_vector = db.Column(db.Text)  # JSON string of list
     image_filename = db.Column(db.String(255))  # Filename of uploaded image (legacy)
-    image_data = db.Column(db.LargeBinary)  # Binary image data stored in database
+    image_data = db.Column(db.LargeBinary(length=(2**32)-1))  # Binary image data stored in database (PostgreSQL compatible)
     image_mimetype = db.Column(db.String(50))  # MIME type of the image
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     can_edit = db.Column(db.Boolean, default=True)  # Allow editing before approval

@@ -19,7 +19,7 @@ class ProductionConfig(Config):
     """Production configuration"""
     DEBUG = False
 
-    # Production should use MySQL
+    # Production uses PostgreSQL (or any database specified in DATABASE_URL)
     database_url = os.environ.get('DATABASE_URL')
     if database_url:
         SQLALCHEMY_DATABASE_URI = database_url
