@@ -543,28 +543,6 @@ def debug_user():
     }
     return user_info
 
-@bp.route('/upgrade_mikedongle')
-@login_required
-def upgrade_mikedongle():
-    """Temporary route to upgrade mikedongle to admin"""
-    if current_user.username != 'mikedongle':
-        return {"error": "Unauthorized"}, 403
-
-    user = User.query.filter_by(username='mikedongle').first()
-    if not user:
-        return {"error": "User not found"}, 404
-
-    user.is_admin = True
-    db.session.commit()
-
-    return {
-        "success": True,
-        "message": "mikedongle upgraded to admin",
-        "user": {
-            "username": user.username,
-            "is_admin": user.is_admin
-        }
-    }
 
 @bp.route('/image/<int:suggestion_id>')
 def get_image(suggestion_id):
