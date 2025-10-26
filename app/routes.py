@@ -529,6 +529,20 @@ def edit_suggestion(sugg_id):
                           current_area=current_area,
                           current_location=current_location)
 
+@bp.route('/debug_user')
+@login_required
+def debug_user():
+    """Debug endpoint to check current user status"""
+    user_info = {
+        'username': current_user.username,
+        'email': current_user.email,
+        'is_admin': current_user.is_admin,
+        'is_active': current_user.is_active,
+        'email_verified': current_user.email_verified,
+        'id': current_user.id
+    }
+    return user_info
+
 @bp.route('/image/<int:suggestion_id>')
 def get_image(suggestion_id):
     """Serve image from database"""
