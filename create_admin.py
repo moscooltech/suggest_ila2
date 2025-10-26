@@ -32,6 +32,6 @@ def add_admin_user(username, password, email=None):
 
 if __name__ == "__main__":
     admin_username = "ilaro-admin"
-    admin_password = "ilaro-yewa"
+    admin_password = "ilaroyewa"
     
     add_admin_user(admin_username, admin_password)
