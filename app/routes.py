@@ -156,8 +156,9 @@ def submit():
             return redirect(url_for('main.feed'))
 
         # Check if AI services are working for categorization
-        from .ai import ai_service_status
-        ai_available = any(status['available'] for status in ai_service_status.values())
+        from .ai import check_ai_service_status
+        ai_status = check_ai_service_status()
+        ai_available = any(status['available'] for status in ai_status.values())
         if not ai_available:
             flash('AI services are currently unavailable. Your suggestion will be processed with basic text analysis.', 'warning')
 
